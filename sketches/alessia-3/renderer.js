@@ -60,13 +60,41 @@ export class Renderer {
     }
   }
 
-  drawPreviewLine(lockedPoint, mouseX, mouseY, mouseInside, hoveredPoint, maxLineDistance) {
+  drawPreviewLine(
+    lockedPoint,
+    mouseX,
+    mouseY,
+    mouseInside,
+    hoveredPoint,
+    maxLineDistance,
+    points
+  ) {
     if (!lockedPoint || !mouseInside) return;
 
     let x2 = mouseX;
     let y2 = mouseY;
 
-    if (hoveredPoint && hoveredPoint !== lockedPoint) {
+    // Find closest point to mouse
+    let closestPoint = null;
+    let closestDistance = Infinity;
+
+    for (const p of points) {
+      if (p === lockedPoint) continue;
+      const dx = p.x - mouseX;
+      const dy = p.y - mouseY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestPoint = p;
+      }
+    }
+
+    // Use closest point if within max line distance, otherwise use hovered point
+    if (closestPoint) {
+      x2 = closestPoint.x;
+      y2 = closestPoint.y;
+    } else if (hoveredPoint && hoveredPoint !== lockedPoint) {
       x2 = hoveredPoint.x;
       y2 = hoveredPoint.y;
     }
@@ -78,7 +106,7 @@ export class Renderer {
 
     // Only draw preview if within max distance
     if (distance <= maxLineDistance) {
-      this.ctx.strokeStyle = "red";
+      this.ctx.strokeStyle = "grey";
       this.ctx.beginPath();
       this.ctx.moveTo(lockedPoint.x, lockedPoint.y);
       this.ctx.lineTo(x2, y2);
@@ -90,19 +118,45 @@ export class Renderer {
 
   render(points, gameState, gridManager) {
     this.clear();
-    this.drawPathFill(points, gameState.pathCompleted);
+    // draw fill if needed (kept but optional)
+    //this.drawPathFill(points, gameState.pathCompleted);
     this.drawLines(gameState.lines);
     this.drawFallingLines(gameState.fallingLines);
     this.drawPoints(points, gameState.hoveredPoint, gameState.lockedPoint);
-    
+
     const withinDistance = this.drawPreviewLine(
       gameState.lockedPoint,
       gameState.mouseX,
       gameState.mouseY,
       gameState.mouseInside,
       gameState.hoveredPoint,
-      gridManager.maxLineDistance
+      gridManager.maxLineDistance,
+      points
     );
+
+    // Fade-to-black handler
+    if (gameState.fadeAll) {
+      const now = performance.now();
+      const start = gameState.fadeStart || now;
+      const duration =
+        typeof gameState.fadeDuration === "number"
+          ? gameState.fadeDuration
+          : 1000;
+      const elapsed = Math.max(0, now - start);
+      const t = Math.min(1, elapsed / duration);
+
+      this.ctx.save();
+      this.ctx.globalAlpha = t;
+      this.ctx.fillStyle = "black";
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.restore();
+
+      // If fade completed, keep it fully black (optional flag)
+      if (t >= 1) {
+        //gameState.fadeAll = false;
+        gameState.fadeDone = true;
+      }
+    }
 
     return withinDistance;
   }

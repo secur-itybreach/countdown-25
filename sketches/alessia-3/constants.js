@@ -6,8 +6,8 @@ export const GRID = {
 
 // Visual properties
 export const VISUAL = {
-  BASE_RADIUS: 10,
-  HOVER_RADIUS: 15,
+  BASE_RADIUS: 20,
+  HOVER_RADIUS: 25,
   HOVER_DISTANCE: 30,
   LINE_WIDTH: 1,
 };
@@ -93,6 +93,124 @@ export const PROHIBITED_CONNECTIONS = [
   ],
 ];
 
+export const INSIDE_CONNECTIONS = [
+  [
+    { row: 1, col: 4 },
+    { row: 2, col: 5 },
+  ],
+  [
+    { row: 2, col: 4 },
+    { row: 1, col: 5 },
+  ],
+  [
+    { row: 1, col: 5 },
+    { row: 2, col: 6 },
+  ],
+  [
+    { row: 2, col: 5 },
+    { row: 1, col: 6 },
+  ],
+  [
+    { row: 1, col: 6 },
+    { row: 2, col: 7 },
+  ],
+  [
+    { row: 2, col: 6 },
+    { row: 1, col: 7 },
+  ],
+  [
+    { row: 2, col: 6 },
+    { row: 3, col: 7 },
+  ],
+  [
+    { row: 2, col: 7 },
+    { row: 3, col: 6 },
+  ],
+  [
+    { row: 3, col: 6 },
+    { row: 4, col: 7 },
+  ],
+  [
+    { row: 4, col: 6 },
+    { row: 3, col: 7 },
+  ],
+  [
+    { row: 3, col: 5 },
+    { row: 4, col: 6 },
+  ],
+  [
+    { row: 4, col: 5 },
+    { row: 3, col: 6 },
+  ],
+  [
+    { row: 4, col: 6 },
+    { row: 5, col: 7 },
+  ],
+  [
+    { row: 5, col: 6 },
+    { row: 4, col: 7 },
+  ],
+  [
+    { row: 5, col: 6 },
+    { row: 6, col: 7 },
+  ],
+  [
+    { row: 6, col: 6 },
+    { row: 5, col: 7 },
+  ],
+  [
+    { row: 5, col: 5 },
+    { row: 6, col: 6 },
+  ],
+  [
+    { row: 6, col: 5 },
+    { row: 5, col: 6 },
+  ],
+  [
+    { row: 5, col: 4 },
+    { row: 6, col: 5 },
+  ],
+  [
+    { row: 6, col: 4 },
+    { row: 5, col: 5 },
+  ],
+  [
+    { row: 1, col: 5 },
+    { row: 2, col: 5 },
+  ],
+  [
+    { row: 1, col: 6 },
+    { row: 2, col: 6 },
+  ],
+  [
+    { row: 2, col: 6 },
+    { row: 2, col: 7 },
+  ],
+  [
+    { row: 3, col: 6 },
+    { row: 3, col: 7 },
+  ],
+  [
+    { row: 3, col: 6 },
+    { row: 4, col: 6 },
+  ],
+  [
+    { row: 4, col: 6 },
+    { row: 4, col: 7 },
+  ],
+  [
+    { row: 5, col: 6 },
+    { row: 5, col: 7 },
+  ],
+  [
+    { row: 5, col: 6 },
+    { row: 6, col: 6 },
+  ],
+  [
+    { row: 5, col: 5 },
+    { row: 6, col: 5 },
+  ],
+];
 // The specific path coordinates to complete
 export const TARGET_PATH = [
   [1, 4],

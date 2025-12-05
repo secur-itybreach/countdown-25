@@ -5,6 +5,7 @@ import {
   isSpecificPathDrawn,
   isSpecialConnection,
 } from "./utils.js";
+import { INSIDE_CONNECTIONS } from "./constants.js";
 
 export class GameLogic {
   constructor(gameState, points, finish) {
@@ -31,7 +32,36 @@ export class GameLogic {
         p.velocityY = 0;
       }
     }
-    this.finish();
+
+    // Add the INSIDE_CONNECTIONS to the current lines using addLine (handles duplicates/prohibited logic)
+    for (const conn of INSIDE_CONNECTIONS) {
+      const [a, b] = conn;
+      const p1 = this.points.find((pt) => pt.row === a.row && pt.col === a.col);
+      const p2 = this.points.find((pt) => pt.row === b.row && pt.col === b.col);
+      if (p1 && p2) {
+        this.addLine(p1, p2);
+      }
+    }
+
+    // Wait for fill animation (time for renderer to draw the new lines)
+    const FILL_DELAY = 1500;
+    setTimeout(() => {
+      console.log(
+        "Shape filled (INSIDE_CONNECTIONS drawn), starting fade to black..."
+      );
+
+      // Trigger a fade flag that the renderer can use to draw a full-screen fade to black.
+      // Also provide metadata (duration/start) so the renderer can animate smoothly.
+      this.gameState.fadeAll = true;
+      this.gameState.fadeDuration = 1000; // ms
+      this.gameState.fadeStart = performance.now();
+
+      // Give the renderer time to complete fade, then call finish()
+      setTimeout(() => {
+        console.log("Everything faded, calling finish()...");
+        this.finish();
+      }, this.gameState.fadeDuration + 100); // small buffer
+    }, FILL_DELAY);
   }
 
   addLine(p1, p2) {
@@ -45,31 +75,20 @@ export class GameLogic {
 
     // Check if this is a prohibited connection
     if (isProhibitedConnection(p1, p2)) {
-      // Create a falling line (red, disconnected from points)
-      this.gameState.fallingLines.push({
-        x1: p1.x,
-        y1: p1.y,
-        x2: p2.x,
-        y2: p2.y,
-        velocityY: 0,
-        hasLanded: false,
-        bounceCount: 0,
-      });
       return;
     }
 
     const special = isSpecialConnection(p1, p2);
-    this.gameState.lines.push({ start: p1, end: p2, special });
-    this.gameState.drawnLines.add(signature);
-
-    // Check if the specific path is now complete
-    if (isSpecificPathDrawn(this.gameState.drawnLines)) {
-      console.log("🎉 Complete path has been drawn!");
-      this.triggerPathCompletion();
-    }
-
-    // If this is NOT a special line, check if points should fall
-    if (!special) {
+    if (special) {
+      this.gameState.lines.push({ start: p1, end: p2, special });
+      this.gameState.drawnLines.add(signature);
+      // Keep locked point for next connection
+      // Check if the specific path is now complete
+      if (isSpecificPathDrawn(this.gameState.drawnLines)) {
+        console.log("🎉 Complete path has been drawn!");
+        this.triggerPathCompletion();
+      }
+    } else {
       // Only make p1 fall if it's not a protected point
       if (!isProtectedPoint(p1) && !p1.isFalling) {
         p1.isFalling = true;
@@ -83,6 +102,9 @@ export class GameLogic {
         p2.velocityX = (Math.random() - 0.5) * 5;
         p2.velocityY = 0;
       }
+
+      // Unlock point after invalid connection
+      this.gameState.lockedPoint = null;
     }
   }
 }

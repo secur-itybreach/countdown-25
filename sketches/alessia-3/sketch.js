@@ -5,7 +5,7 @@ import { GameState } from "./gameState.js";
 import { Physics } from "./physics.js";
 import { Renderer } from "./renderer.js";
 import { GameLogic } from "./gameLogic.js";
-import { getPointUnderMouse } from "./utils.js";
+import { getPointUnderMouse, isProtectedPoint } from "./utils.js";
 
 console.log("salut");
 
@@ -65,31 +65,52 @@ function handleMouseMove(e) {
     gameState.hoveredPoint = null;
     return;
   }
-
-  // If we don't have a locked start yet and we hit a point, lock it
-  if (!gameState.lockedPoint && newHovered) {
-    gameState.lockedPoint = newHovered;
-  }
-
-  // If we already have a locked point and we now hover a different point
-  if (
-    gameState.lockedPoint &&
-    newHovered &&
-    newHovered !== gameState.lockedPoint
-  ) {
-    const dx = newHovered.x - gameState.lockedPoint.x;
-    const dy = newHovered.y - gameState.lockedPoint.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    if (distance <= gridManager.maxLineDistance) {
-      gameLogic.addLine(gameState.lockedPoint, newHovered);
-      gameState.lockedPoint = newHovered;
-    } else {
-      gameState.lockedPoint = null;
-    }
+  if (newHovered && !isProtectedPoint(newHovered) && !newHovered.isFalling) {
+    newHovered.isFalling = true;
+    newHovered.velocityX = (Math.random() - 0.5) * 5;
+    newHovered.velocityY = 0;
+    return;
   }
 
   gameState.hoveredPoint = newHovered;
+
+  // Lock point on hover (first point selection)
+  if (newHovered && !gameState.lockedPoint) {
+    gameState.lockedPoint = newHovered;
+  }
+}
+
+function handleClick(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  // Find closest point to mouse (same logic as preview line in renderer)
+  let closestPoint = null;
+  let closestDistance = Infinity;
+
+  for (const p of gridManager.points) {
+    if (p.isFalling || p.hasLanded) continue;
+    if (p === gameState.lockedPoint) continue; // Skip locked point
+
+    const dx = p.x - x;
+    const dy = p.y - y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestPoint = p;
+    }
+  }
+
+  if (!gameState.lockedPoint || !closestPoint) {
+    gameState.lockedPoint = null;
+    return;
+  }
+
+  // Draw the line that was previewed
+  gameLogic.addLine(gameState.lockedPoint, closestPoint);
+  gameState.lockedPoint = null; // Reset after drawing
 }
 
 function handleMouseLeave() {
@@ -105,6 +126,7 @@ function handleMouseEnter() {
 canvas.addEventListener("mousemove", handleMouseMove);
 canvas.addEventListener("mouseleave", handleMouseLeave);
 canvas.addEventListener("mouseenter", handleMouseEnter);
+canvas.addEventListener("click", handleClick);
 window.addEventListener("resize", resize);
 
 // Initial setup

@@ -92,19 +92,8 @@ class Particle {
       }
     } else {
       // NORMAL MODE: Original behavior
-      if (isMouseInside) {
-        // Mouse INSIDE shape: attract particles
-        const dx = mouseX - this.x;
-        const dy = mouseY - this.y;
-        const distanceToMouse = Math.sqrt(dx * dx + dy * dy);
-
-        if (distanceToMouse < maxDistance && distanceToMouse > 0) {
-          const force = (1 - distanceToMouse / maxDistance) * 0.5;
-          this.vx += (dx / distanceToMouse) * force;
-          this.vy += (dy / distanceToMouse) * force;
-        }
-      } else {
-        // Mouse OUTSIDE shape: repulse particles from their home positions
+      if (!clickActive) {
+        // Mouse INSIDE shape: repulse particles from their home positions
         // Calculate distance from mouse to particle's HOME position
         const homeToMouseX = mouseX - this.homeX;
         const homeToMouseY = mouseY - this.homeY;
@@ -119,6 +108,17 @@ class Particle {
           // Push the particle away from the direction of mouse relative to home
           this.vx -= (homeToMouseX / distanceMouseToHome) * repulsionForce;
           this.vy -= (homeToMouseY / distanceMouseToHome) * repulsionForce;
+        }
+      } else if (clickActive) {
+        // Mouse OUTSIDE shape: attract particles
+        const dx = mouseX - this.x;
+        const dy = mouseY - this.y;
+        const distanceToMouse = Math.sqrt(dx * dx + dy * dy);
+
+        if (distanceToMouse < maxDistance && distanceToMouse > 0) {
+          const force = (1 - distanceToMouse / maxDistance) * 0.5;
+          this.vx += (dx / distanceToMouse) * force;
+          this.vy += (dy / distanceToMouse) * force;
         }
       }
 
@@ -262,18 +262,21 @@ let thresholdReached = false;
 let clickRepulsionActive = false;
 let clickX = 0;
 let clickY = 0;
-
+let clickActive = false;
 // Handle click for second wave repulsion (only affects green particles)
 canvas.addEventListener("mousedown", (e) => {
   if (thresholdReached) {
     clickRepulsionActive = true;
     clickX = e.clientX;
     clickY = e.clientY;
+  } else {
+    clickActive = true;
   }
 });
 
 canvas.addEventListener("mouseup", (e) => {
   clickRepulsionActive = false;
+  clickActive = false;
 });
 
 // Update mouse position for normal interaction
